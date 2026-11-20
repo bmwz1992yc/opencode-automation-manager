@@ -40,6 +40,14 @@ opencode plugin add opencode-automation-manager
 }
 ```
 
+放进全局插件目录则**不需要任何配置**，宿主会自动发现并加载：
+
+```text
+~/.config/opencode/plugins/automation-manager/
+```
+
+删掉该目录即停用；`dist/gui-experimental.cjs` 变化时宿主会自动重载 GUI。
+
 ## 入口
 
 - 标题栏「自动任务」按钮
