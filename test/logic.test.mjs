@@ -10,8 +10,13 @@ import {
   toLocalInput,
   previewRuns,
   friendlyOutput as fo,
+  serverHost,
+  serverLabel,
+  looksLikeMissingRoute,
+  describeServerError,
 } from "./.build/format.js"
 import { AutomationClient } from "./.build/client.js"
+import { toServerOption, pickDefaultServer, isServerReady } from "./.build/servers.js"
 
 // cron human text
 assert.equal(describeCron("0 21 * * *"), "每天 21:00")
@@ -80,5 +85,64 @@ assert.equal(turns[1].reply, "答复一")
 
 // toLocalInput shape
 assert.match(toLocalInput(1795145713092), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)
+
+// ---- servers ----
+assert.equal(serverHost("http://204.152.198.222:4096"), "204.152.198.222:4096")
+assert.equal(serverHost("https://oc.example.com/"), "oc.example.com")
+assert.equal(serverHost("not a url"), "not a url")
+
+const localRef = {
+  id: "sidecar",
+  name: "sidecar",
+  url: "http://127.0.0.1:4096",
+  builtin: true,
+  local: true,
+  connected: true,
+  compatible: true,
+  client: {},
+}
+const remoteRef = {
+  id: "http://204.152.198.222:4096",
+  // A server with no configured name reports its id, which is the URL.
+  name: "http://204.152.198.222:4096",
+  url: "http://204.152.198.222:4096",
+  builtin: false,
+  local: false,
+  connected: true,
+  compatible: true,
+  client: {},
+}
+const namedRef = { ...remoteRef, id: "rs", name: "研发机", url: "https://oc.example.com" }
+
+assert.equal(serverLabel(localRef), "127.0.0.1:4096（本机）")
+assert.equal(serverLabel(remoteRef), "204.152.198.222:4096")
+assert.equal(serverLabel(namedRef), "研发机")
+
+const options = [remoteRef, localRef].map(toServerOption)
+assert.equal(options[0].id, "http://204.152.198.222:4096")
+assert.equal(options[0].client, remoteRef.client)
+// The panel must always open on the app's own server, whatever the order.
+assert.equal(pickDefaultServer(options)?.id, "sidecar")
+assert.equal(pickDefaultServer([toServerOption(remoteRef)])?.id, remoteRef.id)
+assert.equal(pickDefaultServer([]), undefined)
+
+assert.equal(isServerReady(toServerOption(localRef)), true)
+assert.equal(isServerReady(toServerOption({ ...remoteRef, connected: false })), false)
+assert.equal(isServerReady(toServerOption({ ...remoteRef, compatible: false })), false)
+assert.equal(isServerReady(undefined), false)
+
+assert.equal(looksLikeMissingRoute("404 Not Found"), true)
+assert.equal(looksLikeMissingRoute("Cannot GET /api/experimental/automation"), true)
+assert.equal(looksLikeMissingRoute("No such route"), true)
+assert.equal(looksLikeMissingRoute("Unauthorized"), false)
+
+assert.ok(describeServerError(new Error("boom"), toServerOption(remoteRef)).includes("boom"))
+assert.match(describeServerError(new Error("x"), toServerOption({ ...remoteRef, connected: false })), /未连接/)
+assert.match(describeServerError(new Error("x"), toServerOption({ ...remoteRef, compatible: false })), /版本与桌面端不匹配/)
+assert.match(
+  describeServerError(new Error("404 Not Found"), toServerOption(remoteRef)),
+  /experimental.*automations/s,
+)
+assert.equal(describeServerError(new Error("boom")), "boom")
 
 console.log("all logic checks passed")

@@ -80,6 +80,14 @@ export const CSS = `/* Automation Manager styles. Namespaced with am- to avoid h
 
 /* ---- toolbar ---- */
 .am-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.am-serverbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 10px; border: 1px solid var(--am-border); border-radius: 10px;
+  background: var(--am-layer);
+}
+.am-server-pick { display: flex; align-items: center; gap: 8px; }
+.am-server-pick .am-select { min-width: 190px; max-width: 320px; padding: 4px 8px; }
+.am-serverbar .am-note { flex: 1; min-width: 180px; }
 .am-tabs { display: inline-flex; padding: 2px; gap: 2px; border: 1px solid var(--am-border); border-radius: 9px; background: var(--am-layer); }
 .am-tab { border: 0; background: transparent; color: var(--am-muted); height: 26px; padding: 0 11px; border-radius: 7px; cursor: pointer; }
 .am-tab:hover { color: var(--am-strong); }

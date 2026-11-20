@@ -1,33 +1,43 @@
 import { Command, Plugin, SettingsPage, TitlebarItem } from "@opencode/plugin/gui"
-import { AutomationClient } from "./client"
 import { ManagerDialog } from "./gui/dialog"
 import { ManagerPage } from "./gui/page"
 import { installStyles } from "./gui/styles"
+import { toServerOption, unconnectedServer } from "./servers"
 
 export default Plugin.define({
   i18n: {
     en: {
       title: "自动任务",
       open: "打开自动任务",
-      description: "查看、新建、编辑、暂停与删除自动任务（实验性 automations）",
+      description: "查看、新建、编辑、暂停与删除自动任务（实验性 automations），可切换本机或其他已接入的服务器",
     },
   },
   setup(ctx) {
     installStyles()
-    const client = new AutomationClient(ctx.client)
 
-    /** Open a session in the desktop app, so a run's conversation is one click away. */
-    const openSession = (sessionID: string) => {
-      const servers = ctx.servers.list().map((id) => ctx.servers.get(id))
-      const server = servers.find((item) => item?.builtin) ?? servers.find((item) => item !== undefined)
-      if (!server) return
-      ctx.tabs.open({ server: server.id, id: sessionID }, { focus: true })
+    /**
+     * Every server the app lists, local and remote, rebuilt on each read so a
+     * server added in Settings shows up without a restart. Reading it inside a
+     * memo is what subscribes the list to the app's reactive server list.
+     */
+    const servers = () =>
+      ctx.servers.list().map((id) => {
+        const ref = ctx.servers.get(id)
+        // A listed server with no ref yet is kept, visible as "未连接".
+        return ref ? toServerOption(ref) : unconnectedServer(id)
+      })
+
+    /** Open a session on the server that owns it, so remote runs open remotely. */
+    const openSession = (serverID: string, sessionID: string) => {
+      const id = serverID || ctx.servers.list().find((candidate) => ctx.servers.get(candidate)?.builtin)
+      if (!id || !ctx.servers.get(id)) return
+      ctx.tabs.open({ server: id, id: sessionID }, { focus: true })
     }
 
     const open = () => {
       if (ctx.dialogs.active()) return
       ctx.dialogs.open((dialog) => (
-        <ManagerDialog ctx={ctx} client={client} onOpenSession={openSession} onClose={() => dialog.close()} />
+        <ManagerDialog ctx={ctx} servers={servers} onOpenSession={openSession} onClose={() => dialog.close()} />
       ))
     }
 
@@ -43,11 +53,11 @@ export default Plugin.define({
             id: "automation-manager",
             title: ctx.t("title"),
             description: ctx.t("description"),
-            keywords: "automation schedule cron timer task 自动任务 定时 任务 计划",
+            keywords: "automation schedule cron timer task 自动任务 定时 任务 计划 服务器 server remote",
           },
         ]
       },
-      render: () => <ManagerPage client={client} onOpenSession={openSession} />,
+      render: () => <ManagerPage servers={servers} openSession={openSession} />,
     })
 
     ctx.add(TitlebarItem, (): TitlebarItem => ({
@@ -62,7 +72,7 @@ export default Plugin.define({
       id: "open",
       title: ctx.t("title"),
       description: ctx.t("description"),
-      keywords: "automation schedule cron timer task 自动任务 定时 任务 计划",
+      keywords: "automation schedule cron timer task 自动任务 定时 任务 计划 服务器 server remote",
       group: "设置",
       section: "navigation",
       bind: "mod+alt+a",

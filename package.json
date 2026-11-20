@@ -1,6 +1,6 @@
 {
   "name": "opencode-automation-manager",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Manage OpenCode Desktop automations: list, create, edit, pause, resume, run now, and inspect run history.",
   "license": "MIT",
@@ -36,7 +36,7 @@
     "build": "vite build",
     "dev": "vite build --watch",
     "typecheck": "tsc --noEmit",
-    "test:logic": "esbuild src/format.ts src/client.ts --format=esm --platform=node --outdir=test/.build --log-level=warning && node test/logic.test.mjs",
+    "test:logic": "esbuild src/format.ts src/client.ts src/servers.ts --format=esm --platform=node --outdir=test/.build --log-level=warning && node test/logic.test.mjs",
     "test:render": "vite build --config test/vite.render.config.ts --logLevel warn && node test/run-render.mjs",
     "test": "npm run test:logic && npm run test:render",
     "prepublishOnly": "npm run build"

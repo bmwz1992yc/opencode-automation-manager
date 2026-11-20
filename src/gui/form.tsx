@@ -1,7 +1,8 @@
 import { createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
-import type { AutomationInfo } from "../types"
+import type { AutomationInfo, ServerOption } from "../types"
 import type { AgentOption, ModelOption, TaskSpec, TriggerKind } from "../types"
 import { AutomationClient, errorText } from "../client"
+import { serverHost, serverLabel } from "../format"
 import {
   clockText,
   draftFromTrigger,
@@ -49,11 +50,21 @@ export function TaskForm(props: {
   client: AutomationClient
   mode: "create" | "edit"
   initial?: AutomationInfo
+  /** The server the task will live on; undefined for the app's own. */
+  server?: ServerOption
   onSaved: (info: AutomationInfo, mode: "create" | "edit") => void
   onCancel: () => void
 }) {
   const initial = props.initial
   const isEdit = props.mode === "edit"
+  const remote = () => props.server !== undefined && !props.server.builtin && !props.server.local
+  const directoryHint = () => {
+    const server = props.server
+    if (!server || !remote()) return "C:\\Users\\yangc\\opencode工作区域"
+    return serverHost(server.url).startsWith("127.0.0.1") || serverHost(server.url).startsWith("localhost")
+      ? "/home/user/work"
+      : "/srv/work"
+  }
 
   const [name, setName] = createSignal(initial?.name ?? "")
   const [actionType, setActionType] = createSignal<"prompt" | "code">(
@@ -265,6 +276,14 @@ export function TaskForm(props: {
 
   return (
     <div class="am-form">
+      <Show when={remote() && props.server}>
+        {(server) => (
+          <p class="am-note">
+            这条任务建在「{serverLabel(server())}」上：模型、子代理与目录都取自那台机器，到点由它执行。
+          </p>
+        )}
+      </Show>
+
       <Show when={isEdit}>
         <p class="am-warn">
           官方接口没有「修改」操作，保存会新建一条任务再删除旧任务：任务 ID 会变、运行计数清零，其余配置原样保留。
@@ -507,13 +526,20 @@ export function TaskForm(props: {
           <input
             class="am-input"
             list="am-dir-list"
-            placeholder="C:\\Users\\yangc\\opencode工作区域"
+            placeholder={directoryHint()}
             value={directory()}
             onInput={(event) => setDirectory(event.currentTarget.value)}
           />
           <datalist id="am-dir-list">
             <For each={directories()}>{(dir) => <option value={dir} />}</For>
           </datalist>
+          <Show when={remote() && props.server}>
+            {(server) => (
+              <span class="am-note">
+                这是「{serverLabel(server())}」上的路径，不是本机路径；下面列出的建议来自那台机器的近期会话。
+              </span>
+            )}
+          </Show>
         </div>
 
         <Show when={actionType() === "prompt"}>

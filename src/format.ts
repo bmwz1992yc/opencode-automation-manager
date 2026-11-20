@@ -2,6 +2,7 @@ import type {
   AutomationAction,
   AutomationInfo,
   AutomationTrigger,
+  ServerOption,
   TargetDraft,
   TriggerDraft,
 } from "./types"
@@ -372,3 +373,65 @@ export function dirName(directory: string | undefined): string {
   const index = Math.max(trimmed.lastIndexOf("/"), trimmed.lastIndexOf("\\"))
   return index >= 0 ? trimmed.slice(index + 1) || trimmed : trimmed
 }
+
+/** Host (and port) of a server URL, for compact display. */
+export function serverHost(url: string): string {
+  const trimmed = String(url || "").trim()
+  if (!trimmed) return ""
+  try {
+    return new URL(trimmed).host
+  } catch {
+    return trimmed.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "").replace(/\/+$/, "")
+  }
+}
+
+/** Identity fields of a server, so callers and tests need no full ref. */
+type ServerIdentity = Pick<ServerOption, "id" | "name" | "url" | "builtin">
+
+/**
+ * Display name of a server. A server without a configured name reports its id,
+ * which is usually the URL, so fall back to the host; the local one is tagged.
+ */
+export function serverLabel(server: ServerIdentity): string {
+  const named = String(server.name || "").trim()
+  const host = serverHost(server.url)
+  const anonymous = !named || named === server.id || /^[a-z][a-z0-9+.-]*:\/\//i.test(named)
+  const base = anonymous ? host || server.id : named
+  return server.builtin ? `${base}（本机）` : base
+}
+
+/** Whether a failed call looks like the automation endpoint is absent on that server. */
+export function looksLikeMissingRoute(text: string): boolean {
+  return /(^|\D)404(\D|$)|not found|no such (path|route|endpoint)|unknown (path|route|endpoint)|cannot (GET|POST|PUT|DELETE)/i.test(
+    text,
+  )
+}
+
+function causeText(cause: unknown): string {
+  if (cause instanceof Error) return cause.message
+  if (cause !== null && typeof cause === "object" && "message" in cause) {
+    return String((cause as { message?: unknown }).message)
+  }
+  return String(cause)
+}
+
+/** Turn a failed automation call into something the user can act on. */
+export function describeServerError(
+  cause: unknown,
+  server?: Pick<ServerOption, "id" | "name" | "url" | "builtin" | "connected" | "compatible">,
+): string {
+  const text = causeText(cause)
+  if (!server) return text
+  const label = serverLabel(server)
+  if (!server.connected) {
+    return `未连接到「${label}」。请先在 设置 → 服务器 中确认它在线，再刷新。`
+  }
+  if (!server.compatible) {
+    return `「${label}」的 OpenCode 版本与桌面端不匹配，无法管理它的任务。`
+  }
+  if (looksLikeMissingRoute(text)) {
+    return `「${label}」没有启用自动任务接口：请在那台机器的 opencode.json 里加上 "experimental": { "automations": true }，重启服务后再刷新。`
+  }
+  return text
+}
+

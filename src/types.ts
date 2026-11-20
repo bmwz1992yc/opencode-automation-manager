@@ -6,6 +6,7 @@ import type {
   AutomationOutcome,
   AutomationStatus,
   AutomationTrigger,
+  OpenCodeClient,
 } from "@opencode/client/promise"
 
 export type { AutomationAction, AutomationInfo, AutomationOutcome, AutomationStatus, AutomationTrigger }
@@ -95,3 +96,28 @@ export interface AgentOption {
   /** A model pinned in the agent's own config; it overrides the task session's model. */
   model?: ModelPick
 }
+
+/**
+ * One server the desktop app has connected, reduced to what the manager needs.
+ * `client` is that server's own API client, so every call made through it lands
+ * on that machine.
+ */
+export interface ServerOption {
+  id: string
+  name: string
+  url: string
+  /** The app's own server, the desktop sidecar. */
+  builtin: boolean
+  /** The app's own server, or a loopback connection to its port. */
+  local: boolean
+  /** The event connection to this server is up. */
+  connected: boolean
+  /** A health check did not find the server's version incompatible. */
+  compatible: boolean
+  /**
+   * That server's API client. Absent for a server the app lists but has not
+   * authenticated with yet (for example a wrong password), so it cannot be used.
+   */
+  client: OpenCodeClient | null
+}
+
