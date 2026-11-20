@@ -85,8 +85,26 @@ function assistantText(message: { content: ReadonlyArray<{ type: string; text?: 
 
 export class AutomationClient {  private titles = new Map<string, string>()
   private meta = new Map<string, SessionMeta>()
+  /** Cached `/api/info` version; null once a probe failed. */
+  private version: string | null | undefined
 
   constructor(private readonly client: OpenCodeClient) {}
+
+  /**
+   * The server's own version, for diagnosing a missing automation API. Probed
+   * once per client; undefined when the server does not answer `/api/info`.
+   */
+  async serverVersion(): Promise<string | undefined> {
+    if (this.version === null) return undefined
+    if (this.version !== undefined) return this.version
+    try {
+      const info = await this.client.server.info()
+      this.version = info?.version?.trim() || null
+    } catch {
+      this.version = null
+    }
+    return this.version ?? undefined
+  }
 
   /** All automations, with this plugin's spent run-now helpers swept away. */
   async list(): Promise<AutomationInfo[]> {

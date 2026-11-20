@@ -120,7 +120,10 @@ export function ManagerPage(props: {
     } catch (cause) {
       // A failed refresh keeps the last good list; only a first load blocks.
       if (gen !== generation) return
-      setError(describeServerError(cause, server))
+      // Naming the remote's version turns "接口不存在" into an actionable cause.
+      const version = await active.serverVersion()
+      if (gen !== generation) return
+      setError(describeServerError(cause, server, version))
     } finally {
       if (gen === generation) setPrimed(true)
     }

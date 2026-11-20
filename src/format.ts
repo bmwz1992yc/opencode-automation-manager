@@ -407,6 +407,10 @@ export function looksLikeMissingRoute(text: string): boolean {
   )
 }
 
+/** The SDK's reason for "the server answered, but not with JSON". */
+const CONTENT_TYPE_REASON = "UnsupportedContentType"
+
+/** Message text of whatever was thrown, without assuming an Error class. */
 function causeText(cause: unknown): string {
   if (cause instanceof Error) return cause.message
   if (cause !== null && typeof cause === "object" && "message" in cause) {
@@ -415,10 +419,26 @@ function causeText(cause: unknown): string {
   return String(cause)
 }
 
+/**
+ * Whether a server version predates the automation API. 2.3.x renamed the
+ * experimental `schedule` API to `automation`; older servers only answer the
+ * former, so their tasks cannot be managed here.
+ */
+export function isLegacyAutomationVersion(version: string | undefined): boolean {
+  if (!version) return false
+  const match = String(version).trim().replace(/^v/i, "").match(/^(\d+)\.(\d+)/)
+  if (!match) return false
+  const major = Number(match[1])
+  const minor = Number(match[2])
+  if (!Number.isFinite(major) || !Number.isFinite(minor)) return false
+  return major < 2 || (major === 2 && minor < 3)
+}
+
 /** Turn a failed automation call into something the user can act on. */
 export function describeServerError(
   cause: unknown,
   server?: Pick<ServerOption, "id" | "name" | "url" | "builtin" | "connected" | "compatible">,
+  version?: string,
 ): string {
   const text = causeText(cause)
   if (!server) return text
@@ -429,8 +449,18 @@ export function describeServerError(
   if (!server.compatible) {
     return `「${label}」的 OpenCode 版本与桌面端不匹配，无法管理它的任务。`
   }
-  if (looksLikeMissingRoute(text)) {
-    return `「${label}」没有启用自动任务接口：请在那台机器的 opencode.json 里加上 "experimental": { "automations": true }，重启服务后再刷新。`
+  // A missing automation endpoint surfaces either as a non-JSON reply (the server
+  // falls back to its web page) or as a route-not-found error.
+  const missingApi = text.startsWith(CONTENT_TYPE_REASON) || looksLikeMissingRoute(text)
+  if (missingApi) {
+    const type = text.startsWith(CONTENT_TYPE_REASON)
+      ? text.slice(CONTENT_TYPE_REASON.length).replace(/^:\s*/, "").trim() || "没有 Content-Type"
+      : ""
+    const head = type ? `「${label}」的响应不是 JSON（Content-Type: ${type}），没有自动任务接口。` : `「${label}」没有自动任务接口。`
+    if (isLegacyAutomationVersion(version)) {
+      return `${head}该服务器版本 ${version} 只有旧的 schedule 接口；automation 接口从 2.3.x 起才有。把服务器升级到 2.3.2 并开启 "experimental": { "automations": true } 后重启，这里就能管理；在那之前只能用它自己的界面管理定时任务。`
+    }
+    return `${head}请在那台机器的 opencode.json 里加上 "experimental": { "automations": true }，重启服务后再刷新；若版本低于 2.3.2，还需先升级。`
   }
   return text
 }

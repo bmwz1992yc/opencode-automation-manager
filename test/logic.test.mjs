@@ -14,6 +14,7 @@ import {
   serverLabel,
   looksLikeMissingRoute,
   describeServerError,
+  isLegacyAutomationVersion,
 } from "./.build/format.js"
 import { AutomationClient } from "./.build/client.js"
 import { toServerOption, pickDefaultServer, isServerReady } from "./.build/servers.js"
@@ -144,5 +145,23 @@ assert.match(
   /experimental.*automations/s,
 )
 assert.equal(describeServerError(new Error("boom")), "boom")
+// A server that answers its web page instead of JSON, as an old server does.
+assert.match(
+  describeServerError(new Error("UnsupportedContentType: text/html; charset=UTF-8"), toServerOption(remoteRef), "2.2.6"),
+  /2\.2\.6.*旧的 schedule 接口/s,
+)
+assert.match(
+  describeServerError(new Error("UnsupportedContentType: text/html"), toServerOption(remoteRef), "2.3.2"),
+  /没开自动任务接口|automations.*true/s,
+)
+assert.match(describeServerError(new Error("UnsupportedContentType: text/plain"), toServerOption(remoteRef)), /没有自动任务接口/)
+assert.match(describeServerError(new Error("404 Not Found"), toServerOption(remoteRef), "v2.1.0"), /schedule 接口/)
+assert.equal(isLegacyAutomationVersion("2.2.6"), true)
+assert.equal(isLegacyAutomationVersion("v2.2.6"), true)
+assert.equal(isLegacyAutomationVersion("2.3.2"), false)
+assert.equal(isLegacyAutomationVersion("2.10.0"), false)
+assert.equal(isLegacyAutomationVersion("3.0.0"), false)
+assert.equal(isLegacyAutomationVersion(undefined), false)
+assert.equal(isLegacyAutomationVersion("garbage"), false)
 
 console.log("all logic checks passed")
