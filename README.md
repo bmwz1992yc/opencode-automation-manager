@@ -32,6 +32,8 @@ pause/resume, run now, and inspect past runs.
 
 ## 安装
 
+> npm 上目前是 **0.1.0**（单服务器）。本文档描述的 0.2.0 只存在于仓库源码，尚未发布到 npm；在那之前请用下面的「本地目录」方式。
+
 ```bash
 opencode plugin add opencode-automation-manager
 ```
