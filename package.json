@@ -1,0 +1,54 @@
+{
+  "name": "opencode-automation-manager",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Manage OpenCode Desktop automations: list, create, edit, pause, resume, run now, and inspect run history.",
+  "license": "MIT",
+  "author": "bmwz1992yc",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bmwz1992yc/opencode-automation-manager.git"
+  },
+  "homepage": "https://github.com/bmwz1992yc/opencode-automation-manager#readme",
+  "bugs": {
+    "url": "https://github.com/bmwz1992yc/opencode-automation-manager/issues"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "automation",
+    "schedule",
+    "cron",
+    "desktop",
+    "gui"
+  ],
+  "exports": {
+    "./gui-experimental": "./dist/gui-experimental.cjs"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit",
+    "test:logic": "esbuild src/format.ts src/client.ts --format=esm --platform=node --outdir=test/.build --log-level=warning && node test/logic.test.mjs",
+    "test:render": "vite build --config test/vite.render.config.ts --logLevel warn && node test/run-render.mjs",
+    "test": "npm run test:logic && npm run test:render",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@opencode/client": "2.3.2",
+    "@opencode/plugin": "2.3.2",
+    "@types/node": "^22.10.0",
+    "jsdom": "^29.1.1",
+    "solid-js": "^1.9.5",
+    "typescript": "^5.7.0",
+    "vite": "^7.1.0",
+    "vite-plugin-solid": "^2.11.0"
+  }
+}
