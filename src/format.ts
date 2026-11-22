@@ -39,6 +39,21 @@ export function targetText(action: AutomationAction): string {
   return "未指定"
 }
 
+/**
+ * How each run is placed. The server opens a fresh `ses_aut_<task>_<n>` session
+ * per run for a subagent target, and prompts the task's own session otherwise.
+ */
+export function runMode(action: AutomationAction): { text: string; hint: string } {
+  if (action.type === "code") {
+    return { text: "在绑定会话里执行", hint: "代码动作直接运行，不调用模型，也不新建会话" }
+  }
+  const to = action.to
+  if (to && "subagent" in to && to.subagent) {
+    return { text: "每次新建会话", hint: "每次触发新开一个会话跑，上下文独立，前一次的输出不会带进来" }
+  }
+  return { text: "同一会话", hint: "每次投进任务绑定的会话，历史累积，上下文会越来越长" }
+}
+
 export function shortID(id: string | undefined): string {
   if (!id) return "—"
   return id.length > 14 ? `${id.slice(0, 14)}…` : id

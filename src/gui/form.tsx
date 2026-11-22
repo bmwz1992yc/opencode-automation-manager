@@ -485,7 +485,7 @@ export function TaskForm(props: {
       <section class="am-section">
         <div class="am-section-title">
           <span>执行目标</span>
-          <span class="am-section-hint">{isEdit ? "编辑时沿用原任务的绑定会话" : "决定任务在哪个会话里跑"}</span>
+          <span class="am-section-hint">{isEdit ? "编辑时沿用原任务的绑定会话" : "决定每次运行放在新会话还是固定会话"}</span>
         </div>
 
         <Show when={actionType() === "prompt"}>
@@ -493,25 +493,30 @@ export function TaskForm(props: {
             <div class="am-seg">
               <button
                 type="button"
-                classList={{ active: targetKind() === "session" }}
-                onClick={() => setTargetKind("session")}
-              >
-                独立会话
-              </button>
-              <button
-                type="button"
                 classList={{ active: targetKind() === "subagent" }}
                 onClick={() => setTargetKind("subagent")}
               >
-                子代理
+                每次新建会话
+              </button>
+              <button
+                type="button"
+                classList={{ active: targetKind() === "session" }}
+                onClick={() => setTargetKind("session")}
+              >
+                固定会话
               </button>
             </div>
           </div>
+          <span class="am-note">
+            {targetKind() === "subagent"
+              ? "每次触发新开一个会话（ses_任务ID_序号）跑，上下文独立，前一次的输出不会带进来；每次运行的会话都留在运行记录里。"
+              : "每次把提示词投进任务绑定的同一个会话，历史会累积，上下文越来越长，但前缀缓存命中多、更省。"}
+          </span>
         </Show>
 
         <Show when={actionType() === "prompt" && targetKind() === "subagent"}>
           <div class="am-field">
-            <label class="am-label">子代理</label>
+            <label class="am-label">子代理（决定用什么能力跑，不影响会话是否新建）</label>
             <select class="am-select" style={{ "max-width": "260px" }} value={agent()} onChange={(event) => setAgent(event.currentTarget.value)}>
               <Show when={agents().length === 0}>
                 <option value="general">general</option>
@@ -576,7 +581,7 @@ export function TaskForm(props: {
             </div>
             <span class="am-note">
               {targetKind() === "subagent"
-                ? "子代理会继承这个任务的会话模型与思考等级；若该子代理在配置里固定了模型，以它的配置为准。"
+                ? "每次新建的会话会继承这个任务的模型与思考等级；若该子代理在配置里固定了模型，以它的配置为准。"
                 : isEdit
                   ? "改动后会切换原绑定会话的模型，历史对话不受影响；不改则保持原样。"
                   : "新建任务时会用这个模型开一个任务专用会话。"}

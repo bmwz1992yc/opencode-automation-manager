@@ -12,6 +12,7 @@ import {
   friendlyOutput,
   outcomeLabel,
   relativeTime,
+  runMode,
   shortID,
   statusLabel,
   targetText,
@@ -165,6 +166,8 @@ export function TaskCard(props: {
         <Show when={info().action.type === "prompt"}>
           <span class="am-sep">·</span>
           <span>{targetText(info().action)}</span>
+          <span class="am-sep">·</span>
+          <span class="am-kind">{runMode(info().action).text}</span>
         </Show>
       </div>
 
@@ -225,6 +228,12 @@ export function TaskCard(props: {
             <div class="am-kv-row">
               <span class="am-kv-key">执行目标</span>
               <span class="am-kv-val">{targetText(info().action)}</span>
+            </div>
+            <div class="am-kv-row">
+              <span class="am-kv-key">运行方式</span>
+              <span class="am-kv-val">
+                {runMode(info().action).text} · {runMode(info().action).hint}
+              </span>
             </div>
             <Show when={props.model}>
               {(model) => (

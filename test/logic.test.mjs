@@ -15,6 +15,7 @@ import {
   looksLikeMissingRoute,
   describeServerError,
   isLegacyAutomationVersion,
+  runMode,
 } from "./.build/format.js"
 import { AutomationClient } from "./.build/client.js"
 import { toServerOption, pickDefaultServer, isServerReady } from "./.build/servers.js"
@@ -163,5 +164,12 @@ assert.equal(isLegacyAutomationVersion("2.10.0"), false)
 assert.equal(isLegacyAutomationVersion("3.0.0"), false)
 assert.equal(isLegacyAutomationVersion(undefined), false)
 assert.equal(isLegacyAutomationVersion("garbage"), false)
+
+// ---- run placement ----
+assert.equal(runMode({ type: "prompt", prompt: "x", to: { subagent: "general" } }).text, "每次新建会话")
+assert.match(runMode({ type: "prompt", prompt: "x", to: { subagent: "general" } }).hint, /上下文独立/)
+assert.equal(runMode({ type: "prompt", prompt: "x", to: { session: "ses_1" } }).text, "同一会话")
+assert.match(runMode({ type: "prompt", prompt: "x", to: { session: "ses_1" } }).hint, /累积/)
+assert.equal(runMode({ type: "code", code: "return 1" }).text, "在绑定会话里执行")
 
 console.log("all logic checks passed")

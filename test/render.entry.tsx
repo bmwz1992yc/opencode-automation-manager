@@ -159,6 +159,10 @@ export async function run() {
   if (container.querySelectorAll(".am-card").length !== 3) {
     throw new Error(`expected 3 cards, got ${container.querySelectorAll(".am-card").length}`)
   }
+  // Each card states how its runs are placed, so the choice is visible without
+  // opening the edit form.
+  if (!text.includes("每次新建会话")) throw new Error("subagent card does not show its run placement")
+  if (!text.includes("同一会话")) throw new Error("session card does not show its run placement")
 
   // Server picker: two servers, defaulting to the app's own one.
   const serverSelect = [...container.querySelectorAll(".am-serverbar select")][0] as HTMLSelectElement | undefined
@@ -180,7 +184,7 @@ export async function run() {
   await new Promise((resolve) => setTimeout(resolve, 120))
   if (!container.querySelector(".am-form")) throw new Error("create form did not render")
   const formText = container.textContent ?? ""
-  for (const needle of ["任务名称", "触发方式", "执行目标", "结束条件", "创建任务"]) {
+  for (const needle of ["任务名称", "触发方式", "执行目标", "结束条件", "创建任务", "每次新建会话", "固定会话"]) {
     if (!formText.includes(needle)) throw new Error(`form missing: ${needle}`)
   }
 
@@ -227,7 +231,7 @@ export async function run() {
   firstEdit.click()
   await new Promise((resolve) => setTimeout(resolve, 250))
   const subagentText = container.textContent ?? ""
-  if (!subagentText.includes("子代理会继承这个任务的会话模型与思考等级")) {
+  if (!subagentText.includes("每次新建的会话会继承这个任务的模型与思考等级")) {
     throw new Error("subagent model note missing")
   }
   if (![...container.querySelectorAll(".am-form select")].some((n) => (n as HTMLSelectElement).value === "p/m")) {
