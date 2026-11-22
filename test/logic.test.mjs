@@ -16,6 +16,8 @@ import {
   describeServerError,
   isLegacyAutomationVersion,
   runMode,
+  normalizeVariant,
+  variantLabel,
 } from "./.build/format.js"
 import { AutomationClient } from "./.build/client.js"
 import { toServerOption, pickDefaultServer, isServerReady } from "./.build/servers.js"
@@ -171,5 +173,15 @@ assert.match(runMode({ type: "prompt", prompt: "x", to: { subagent: "general" } 
 assert.equal(runMode({ type: "prompt", prompt: "x", to: { session: "ses_1" } }).text, "同一会话")
 assert.match(runMode({ type: "prompt", prompt: "x", to: { session: "ses_1" } }).hint, /累积/)
 assert.equal(runMode({ type: "code", code: "return 1" }).text, "在绑定会话里执行")
+
+// ---- reasoning level ----
+// The server materializes "no level" as the literal "default", which is not a
+// selectable variant id; the picker must treat it as 默认 instead of blank.
+assert.equal(normalizeVariant("default"), "")
+assert.equal(normalizeVariant(undefined), "")
+assert.equal(normalizeVariant("  "), "")
+assert.equal(normalizeVariant(" high "), "high")
+assert.equal(variantLabel("max"), "最高")
+assert.equal(variantLabel(""), "默认")
 
 console.log("all logic checks passed")

@@ -73,9 +73,15 @@ function rawClient(list: () => any[], directory: string) {
       },
     },
     session: {
-      get: async () => ({
+      get: async ({ sessionID }: any) => ({
         title: "自动任务：示例会话",
-        model: { id: "m", providerID: "p", variant: "medium" },
+        // Each task session carries its own reasoning level; the form must not
+        // carry one task's level into another task's form.
+        model: {
+          id: "m",
+          providerID: "p",
+          variant: sessionID === "ses_creator" ? "high" : "default",
+        },
         agent: "general",
       }),
       list: async () => ({
@@ -216,6 +222,17 @@ export async function run() {
   for (const needle of ["保存修改", "保存会新建一条任务再删除旧任务", "改动后会切换原绑定会话的模型"]) {
     if (!editText.includes(needle)) throw new Error(`edit form missing: ${needle}`)
   }
+  // This task's session stores "default" — the server's word for "no explicit
+  // level". The picker must show 默认 instead of sitting with nothing selected,
+  // and it must not borrow the level of the task edited before it.
+  const levelSelect = [...container.querySelectorAll(".am-form select")].find((node) => {
+    const options = [...(node as HTMLSelectElement).options].map((option) => option.value)
+    return options.includes("high") && options.includes("low")
+  }) as HTMLSelectElement | undefined
+  if (!levelSelect) throw new Error("reasoning level select missing on the session task")
+  if (levelSelect.value !== "" || levelSelect.selectedIndex !== 0) {
+    throw new Error(`a "default" level must render as 默认, got value=${levelSelect.value} index=${levelSelect.selectedIndex}`)
+  }
 
   // A subagent target keeps the model + reasoning controls.
   const backToList = [...container.querySelectorAll("button")].find((b) => b.textContent === "返回列表") as HTMLElement
@@ -237,7 +254,7 @@ export async function run() {
   if (![...container.querySelectorAll(".am-form select")].some((n) => (n as HTMLSelectElement).value === "p/m")) {
     throw new Error("model picker hidden for a subagent target")
   }
-  if (![...container.querySelectorAll(".am-form select")].some((n) => (n as HTMLSelectElement).value === "medium")) {
+  if (![...container.querySelectorAll(".am-form select")].some((n) => (n as HTMLSelectElement).value === "high")) {
     throw new Error("reasoning level not prefilled for the subagent task")
   }
 

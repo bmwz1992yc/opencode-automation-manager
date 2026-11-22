@@ -10,6 +10,7 @@ import {
   describeTrigger,
   dirName,
   friendlyOutput,
+  normalizeVariant,
   outcomeLabel,
   relativeTime,
   runMode,
@@ -17,6 +18,7 @@ import {
   statusLabel,
   targetText,
   taskTitle,
+  variantLabel,
 } from "../format"
 
 type HistoryMode = "child" | "turns" | "none"
@@ -241,7 +243,7 @@ export function TaskCard(props: {
                   <span class="am-kv-key">模型</span>
                   <span class="am-kv-val">
                     {model().providerID}/{model().id}
-                    {model().variant ? ` · ${model().variant}` : ""}
+                    {normalizeVariant(model().variant) ? ` · ${variantLabel(model().variant)}` : ""}
                   </span>
                 </div>
               )}

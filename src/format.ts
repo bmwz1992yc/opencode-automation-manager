@@ -213,8 +213,19 @@ export function variantLabel(variant: string | undefined): string {
     medium: "中",
     high: "高",
     xhigh: "极高",
+    max: "最高",
   }
   return labels[variant] ?? variant
+}
+
+/**
+ * A stored reasoning level, normalized for the picker. Servers store `"default"`
+ * for "no explicit level", which is not a selectable variant id — keeping it
+ * would leave the select with nothing selected.
+ */
+export function normalizeVariant(variant: string | undefined): string {
+  const value = String(variant ?? "").trim()
+  return !value || value === "default" ? "" : value
 }
 
 /** Server run notes are terse machine text; show what they mean. */

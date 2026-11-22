@@ -498,10 +498,20 @@ export function ManagerPage(props: {
               setMode("list")
               setEditing(null)
             }}
-            onSaved={(_info, saved) => {
+            onSaved={(info, saved) => {
               setMode("list")
               setEditing(null)
               setNotice(saved === "edit" ? "已保存：旧任务已删除，新任务已生效。" : "任务已创建。")
+              // Saving may have switched the task session's model, so its cached
+              // meta is stale; drop it and let the reload fetch it again.
+              const sessionID = info.sessionID
+              if (sessionID) {
+                setMetas((current) => {
+                  const next = { ...current }
+                  delete next[sessionID]
+                  return next
+                })
+              }
               void load(true)
             }}
           />

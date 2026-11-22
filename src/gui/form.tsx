@@ -7,6 +7,7 @@ import {
   clockText,
   draftFromTrigger,
   isValidCron,
+  normalizeVariant,
   previewRuns,
   relativeTime,
   targetFromAction,
@@ -141,10 +142,10 @@ export function TaskForm(props: {
           const key = `${meta.model.providerID}/${meta.model.id}`
           setOriginalModelKey(key)
           setModelKey(key)
-          if (meta.model.variant) {
-            setOriginalVariant(meta.model.variant)
-            setVariant(meta.model.variant)
-          }
+          // "default" is the server's name for "no explicit level", not a choice.
+          const level = normalizeVariant(meta.model.variant)
+          setOriginalVariant(level)
+          setVariant(level)
         }
       }
     }
@@ -164,7 +165,13 @@ export function TaskForm(props: {
   })
 
   const selectedModel = createMemo(() => modelOptions().find((item) => item.key === modelKey()))
-  const variantOptions = createMemo(() => selectedModel()?.variants ?? [])
+  const variantOptions = createMemo(() => {
+    const list = selectedModel()?.variants ?? []
+    const current = variant()
+    // A level stored under another provider (e.g. "max") must stay selectable,
+    // otherwise the picker silently drops it and the form looks empty.
+    return current && !list.includes(current) ? [...list, current] : list
+  })
 
   /** Pick a model: keep the reasoning level only when the new model offers it. */
   const chooseModel = (key: string) => {
@@ -233,7 +240,7 @@ export function TaskForm(props: {
     submitting = true
     setBusy(true)
     setError("")
-    const picked = models().find((item) => item.key === modelKey())
+    const picked = modelOptions().find((item) => item.key === modelKey())
     // A subagent inherits the task session's model and reasoning level, so the
     // picker applies to both targets. Only a real change triggers a switch.
     const modelApplies = actionType() === "prompt"
