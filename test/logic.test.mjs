@@ -19,6 +19,7 @@ import {
   normalizeVariant,
   variantLabel,
 } from "./.build/format.js"
+import { CSS } from "./.build/gui/styles.js"
 import { AutomationClient } from "./.build/client.js"
 import { toServerOption, pickDefaultServer, isServerReady } from "./.build/servers.js"
 
@@ -183,5 +184,15 @@ assert.equal(normalizeVariant("  "), "")
 assert.equal(normalizeVariant(" high "), "high")
 assert.equal(variantLabel("max"), "最高")
 assert.equal(variantLabel(""), "默认")
+
+// ---- button colours ----
+// The form/reset rule must stay zero-specificity, otherwise `.am-root button
+// { color: inherit }` wins over `.am-btn-primary` and the filled buttons render
+// the page's dark text on purple.
+assert.ok(!/\.am-root button\s*,/.test(CSS), "a `.am-root button` colour rule would override filled buttons")
+assert.match(CSS, /\.am-root :where\(button, select, input, textarea\)/)
+const primary = CSS.match(/\.am-btn-primary \{[^}]*\}/)?.[0] ?? ""
+assert.ok(primary.includes("var(--am-on-accent)"), "primary button must paint its own text colour")
+assert.ok(!/#fff\b/.test(primary), "primary button should use the shared on-accent token")
 
 console.log("all logic checks passed")

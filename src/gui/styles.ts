@@ -22,7 +22,10 @@ export const CSS = `/* Automation Manager styles. Namespaced with am- to avoid h
   --am-card: var(--color-v2-background-bg-base, var(--color-surface-base, #fff));
   --am-layer: var(--color-v2-background-bg-layer-01, #fafafa);
   --am-accent: #6d4aff;
-  --am-accent-hover: #5b3be0;
+  --am-accent-hover: #5733d6;
+  /* Text that sits on the accent fill, so a filled button can never inherit
+     the page's dark body colour again. */
+  --am-on-accent: #fff;
   --am-green: #12805c;
   --am-amber: #a15c07;
   --am-red: #d92d20;
@@ -38,7 +41,9 @@ export const CSS = `/* Automation Manager styles. Namespaced with am- to avoid h
   line-height: 1.5;
 }
 .am-root *, .am-root *::before, .am-root *::after { box-sizing: border-box; }
-.am-root button, .am-root select, .am-root input, .am-root textarea { font: inherit; color: inherit; }
+/* Zero-specificity on the element side: this must stay a base rule so a filled
+   button's own color (e.g. .am-btn-primary) is never overridden by "inherit". */
+.am-root :where(button, select, input, textarea) { font: inherit; color: inherit; }
 
 /* ---- header ---- */
 .am-hero {
@@ -70,12 +75,17 @@ export const CSS = `/* Automation Manager styles. Namespaced with am- to avoid h
 }
 .am-btn:hover:not(:disabled) { background: var(--am-layer); }
 .am-btn:disabled { opacity: .5; cursor: default; }
-.am-btn-primary { background: var(--am-accent); border-color: var(--am-accent); color: #fff; }
+.am-btn-primary {
+  background: var(--am-accent); border-color: var(--am-accent);
+  color: var(--am-on-accent); font-weight: 560;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--am-accent) 40%, transparent);
+}
 .am-btn-primary:hover:not(:disabled) { background: var(--am-accent-hover); border-color: var(--am-accent-hover); }
+.am-btn-primary:disabled { opacity: .55; }
 .am-btn-ghost { background: transparent; }
 .am-btn-danger { color: var(--am-red); border-color: color-mix(in srgb, var(--am-red) 40%, var(--am-border)); }
 .am-btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--am-red) 9%, transparent); }
-.am-btn-danger.am-armed { background: var(--am-red); border-color: var(--am-red); color: #fff; }
+.am-btn-danger.am-armed { background: var(--am-red); border-color: var(--am-red); color: var(--am-on-accent); }
 .am-btn-small { height: 26px; padding: 0 9px; font-size: 12px; border-radius: 7px; }
 
 /* ---- toolbar ---- */

@@ -36,7 +36,7 @@
     "build": "vite build",
     "dev": "vite build --watch",
     "typecheck": "tsc --noEmit",
-    "test:logic": "esbuild src/format.ts src/client.ts src/servers.ts --format=esm --platform=node --outdir=test/.build --log-level=warning && node test/logic.test.mjs",
+    "test:logic": "esbuild src/format.ts src/client.ts src/servers.ts src/gui/styles.ts --format=esm --platform=node --outdir=test/.build --log-level=warning && node test/logic.test.mjs",
     "test:render": "vite build --config test/vite.render.config.ts --logLevel warn && node test/run-render.mjs",
     "test": "npm run test:logic && npm run test:render",
     "prepublishOnly": "npm run build"
