@@ -509,14 +509,14 @@ export function TaskForm(props: {
           </div>
           <span class="am-note">
             {targetKind() === "subagent"
-              ? "每次触发新开一个会话（ses_任务ID_序号）跑，上下文独立，前一次的输出不会带进来；每次运行的会话都留在运行记录里。"
-              : "每次把提示词投进任务绑定的同一个会话，历史会累积，上下文越来越长，但前缀缓存命中多、更省。"}
+              ? "每次触发新开一个会话跑，上下文独立，前一次的输出不会带进来；每次运行的会话都留在运行记录里。服务端只接受子代理身份：主 agent（build）会被拒绝，所以这里必须选一个子代理——它的工具与系统提示按子代理配置，不是你平时用的主 agent。"
+              : "每次把提示词投进任务绑定的同一个会话，用该会话自己的 agent（默认主 agent build）跑；历史累积，上下文越来越长，但前缀缓存命中多、更省。"}
           </span>
         </Show>
 
         <Show when={actionType() === "prompt" && targetKind() === "subagent"}>
           <div class="am-field">
-            <label class="am-label">子代理（决定用什么能力跑，不影响会话是否新建）</label>
+            <label class="am-label">子代理（新建会话只能以子代理身份运行）</label>
             <select class="am-select" style={{ "max-width": "260px" }} value={agent()} onChange={(event) => setAgent(event.currentTarget.value)}>
               <Show when={agents().length === 0}>
                 <option value="general">general</option>
